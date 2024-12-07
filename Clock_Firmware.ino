@@ -37,6 +37,7 @@ bool just_entered = true;
 #define CLOCK_FACE 0
 #define OPTIONS_MENU 1
 #define COLOUR_MENU 5
+#define CLOCK_SETUP 6
 #define DISPLAY_OFF 7
 
 ///// END VARIABLES
@@ -77,6 +78,9 @@ void loop() {
       break;
     case COLOUR_MENU:
       colourMenu();
+      break;
+    case CLOCK_SETUP:
+      clockSetup();
       break;
     case DISPLAY_OFF:
       displayOff();
@@ -145,6 +149,9 @@ void optionsMenu(){
       case 5:
         enterScreen(COLOUR_MENU, 0);
         break;
+      case 6:
+        enterScreen(CLOCK_SETUP, 0);
+        break;
       case 7:
         enterScreen(DISPLAY_OFF, 0);
         break;
@@ -190,20 +197,15 @@ void colourMenu(){
     lcd.setCursor(1, 0);
     lcd.print("Set Colour");
     lcd.setCursor(1, 1);
-    lcd.print("Press when done >");
+    lcd.print("then press");
   }
 
   if(c_menu_stage == 0){
     final_hue = abs(counter % 360);
     updateColour(final_hue, 50);
   }else if(c_menu_stage == 1){
-    if(counter > 100){
-      counter = 100;
-    }else if(counter < 0){
-      counter = 0;
-    }
-
-    final_lightness = counter;
+    constrain(counter, 0, 100);
+    //final_lightness = counter; brightness effect doesn't look very good
     updateColour(final_hue, final_lightness);
   } // Add display contrast?
 
@@ -216,12 +218,131 @@ void colourMenu(){
       c_menu_stage = 1;
       counter = 50;
       lcd.setCursor(1, 0);
-      lcd.print("Choose Shade");
+      lcd.print("Set Brightness");
     }else if(c_menu_stage == 1){
       // c_menu_stage = 2; For changing contrast
       enterScreen(OPTIONS_MENU, 0);
       return;
     }
+  }
+
+}
+
+void clockSetup(){
+
+  static int s_menu_stage;
+
+  static int hours;
+  static int minutes;
+  static int seconds;
+  static int day;
+  static int month;
+  static int year;
+
+  if(just_entered){
+    s_menu_stage = 0;
+
+    // Assign them the actual values
+    hours = 9; // Stage 0
+    minutes = 41; // 1
+    seconds = 30; // 2
+    day = 7; // 5
+    month = 12; // 4
+    year = 2024; // 3
+
+    counter = hours;
+
+    lcd.setCursor(1, 0);
+    lcd.print("Set");
+    lcd.setCursor(0, 1);
+    lcd.print("Time");
+
+    just_entered = false;
+  }
+
+  switch(s_menu_stage){
+    case 0:
+      counter = constrain(counter, 0, 23);
+      hours = counter;
+      break;
+    case 1:
+      counter = constrain(counter, 0, 59);
+      minutes = counter;
+      break;
+    case 2:
+      counter = constrain(counter, 0, 59);
+      seconds = counter;
+      break;
+    case 3:
+      counter = constrain(counter, 2024, 2100);
+      year = counter;
+      break;
+    case 4:
+      counter = constrain(counter, 1, 12);
+      month = counter;
+      break;
+    case 5:
+      counter = day_constrain(counter, month, year); // Different range depending on which month is selected.
+      day = counter;
+      break;
+  }
+
+  // Rendering
+
+  int indicator_loc;
+  if(s_menu_stage < 3){ // Change snprintf to string functions (strcpy, strcat) if running out of code space
+    char time_string[9];
+    snprintf(time_string, sizeof(time_string), "%02d:%02d:%02d", hours, minutes, seconds);
+    lcd.setCursor(8, 0);
+    lcd.print(time_string);
+
+    indicator_loc = 8 + ((s_menu_stage % 3) * 2) + (s_menu_stage % 3);
+  }else if(s_menu_stage < 6){
+    char date_string[11];
+    snprintf(date_string, sizeof(date_string), "%02d/%02d/%d", day, month, year);
+    lcd.setCursor(6, 0);
+    lcd.print(date_string);
+
+    indicator_loc = 12 - ((s_menu_stage % 3) * 2) - (s_menu_stage % 3);
+  }
+
+  lcd.setCursor(6, 1);
+  lcd.print("          "); // Clear existing ^^
+  lcd.setCursor(indicator_loc, 1);
+  if(s_menu_stage == 3){
+    lcd.print("^^^^");
+  }else if(s_menu_stage < 6){
+    lcd.print("^^");
+  }
+
+  // Process inputs
+  if(inputs[0] == true){
+    switch(s_menu_stage){
+      case 0:
+        counter = minutes;
+        break;
+      case 1:
+        counter = seconds;
+        break;
+      case 2:
+        lcd.setCursor(0, 1);
+        lcd.print("Date");
+        counter = year;
+        break;
+      case 3:
+        counter = month;
+        break;
+      case 4:
+        counter = day;
+        break;
+      case 5:
+        // Create DST setting here?
+        enterScreen(OPTIONS_MENU, 0);
+        return;
+        
+    }
+
+    s_menu_stage += 1;
   }
 
 }
@@ -330,13 +451,13 @@ void readEncoder() {
 }
 
 
-void updateColour(float hue, int u_lightness) {
+void updateColour(float hue, float lightness) {
   // Implement changing Lightness to allow for different shades. Hue = pick colour, Lightness = pick shade, Sat will always be 1
 
   hue = hue / 360;
 
   double r, g, b;
-  static float lightness = u_lightness / 100.0;
+  lightness = lightness / 100.0;
   static const float saturation = 1;
 
 	if (saturation == 0){
@@ -357,6 +478,8 @@ void updateColour(float hue, int u_lightness) {
   colour[0] = red;
   colour[1] = green;
   colour[2] = blue;
+
+  Serial.println(red);
 }
 
 double hue2rgb(double p, double q, double t){
@@ -366,4 +489,34 @@ double hue2rgb(double p, double q, double t){
 	if (t < 1 / 2.0) return q;
 	if (t < 2 / 3.0) return p + (q - p) * (2 / 3.0 - t) * 6;
 	return p;
+}
+
+int day_constrain(int value, int month, int year){
+  if(value < 0) return 0;
+  
+  int month_max = 31;
+  switch(month){
+    case 2:
+      month_max = 28;
+
+      if(year % 4 == 0){ // Check leap year
+        if(year % 100 == 0){
+          if(year % 400 == 0){
+            month_max = 29;
+          }
+        }else{
+          month_max = 29;
+        }
+      }
+      break;
+    
+    case 4:
+    case 6:
+    case 9:
+    case 11:
+      month_max = 30;
+  }
+
+  if(value > month_max) return month_max;
+  return value;
 }
