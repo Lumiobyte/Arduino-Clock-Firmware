@@ -1,8 +1,10 @@
-#include <LiquidCrystal.h>
+#include <hd44780.h>
+#include <hd44780ioClass/hd44780_pinIO.h>
+#include "icons.h"
 
 // LCD
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 7, d7 = 8;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+hd44780_pinIO lcd(rs, en, d4, d5, d6, d7);
 
 // LCD RGB
 const int red_pin = 6;
@@ -43,17 +45,17 @@ bool just_entered = true;
 ///// END VARIABLES
 
 void setup() {
+
   pinMode(red_pin, OUTPUT);
   pinMode(green_pin, OUTPUT);
   pinMode(blue_pin, OUTPUT);
 
   pinMode(enc_a, INPUT_PULLUP);
   pinMode(enc_b, INPUT_PULLUP);
-
-  pinMode(13, INPUT_PULLUP);
-
   attachInterrupt(digitalPinToInterrupt(enc_a), readEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(enc_b), readEncoder, CHANGE);
+
+  pinMode(13, INPUT_PULLUP);
 
   lcd.begin(16, 2);
   
@@ -131,10 +133,14 @@ void optionsMenu(){
     counter = 0; // Reset counter so that scrollable menu starts on option 0 (back)
     prev_selected = 1; // selected will initially be 0, therefore this will trigger an initial render of the menu
     just_entered = false;
+
+    // Setup icon slots
+    for(int i = 0; i < 8; i++){
+      lcd.createChar(i, icon_lookup[i*2]);
+    }
   }
 
   static const char *option_names[8] = {"Back", "Timer", "Stopwatch", "Alarm", "World Clock", "Colours", "Clock Setup", "Display Off"};
-  static const char option_symbols[8] = {'B', 'T', 'S', 'A', 'W', 'C', 'N', 'O'};
 
   int selected = counter % 8;
   if(selected < 0){
@@ -157,26 +163,33 @@ void optionsMenu(){
         break;
     }
 
-    lcd.noCursor(); // Disable cursor so it doesn't appear outside of here
+    //lcd.noCursor(); // Disable cursor so it doesn't appear outside of here
     return;
   }
 
 
   if(selected != prev_selected){
-    lcd.clear();
-    lcd.noCursor();
 
-    lcd.setCursor(4, 1);
-    for(int i = 0; i < 8; i++){
-      lcd.print(option_symbols[i]);
+    lcd.createChar(selected, icon_lookup[(selected * 2) + 1]); // Invert icon of selected option
+    lcd.createChar(prev_selected, icon_lookup[prev_selected * 2]); // Undo inversion of previously selected option
+
+    lcd.clear();
+    //lcd.noCursor();
+
+    lcd.setCursor(0, 1);
+    for(int i = 0; i < 8; i++){ // Render icon slots 0-7
+      lcd.write(i);
+      lcd.moveCursorRight();
     }
 
     int leftmost_char = 16 - (strlen(option_names[selected]));
     lcd.setCursor(leftmost_char, 0);
     lcd.print(option_names[selected]);
 
-    lcd.cursor();
-    lcd.setCursor(selected + 4, 1); // To show the cursor at the selected option.
+    lcd.setCursor(0, 1);
+
+    //lcd.cursor();
+    //lcd.setCursor(selected + 4, 1); // To show the cursor at the selected option.
 
     prev_selected = selected;
   }
