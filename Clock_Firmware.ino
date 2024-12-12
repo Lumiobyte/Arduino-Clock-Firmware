@@ -33,14 +33,22 @@ bool timer_active = false;
 bool world_clock = false;
 
 int screen = 0;
-bool just_entered = true;
+bool just_entered = true; 
+
+bool stopwatch_running = false;
+int stopwatch_begin = 0; // Timestamp of the most recent starting of the stopwatch.
+int stopwatch_total = 0; // Total time on the stopwatch. Enables resuming from a pause without the pause time being a part of the total.
 
 // Screens
 #define CLOCK_FACE 0
 #define OPTIONS_MENU 1
-#define COLOUR_MENU 5
-#define CLOCK_SETUP 6
-#define DISPLAY_OFF 7
+#define TIMER_MENU 2
+#define STOPWATCH 3
+#define ALARM_MENU 4
+#define WORLD_CLOCK_MENU 5
+#define COLOUR_MENU 6
+#define CLOCK_SETUP 7
+#define DISPLAY_OFF 8
 
 ///// END VARIABLES
 
@@ -77,6 +85,9 @@ void loop() {
       break;
     case OPTIONS_MENU:
       optionsMenu();
+      break;
+    case STOPWATCH:
+      stopwatch();
       break;
     case COLOUR_MENU:
       colourMenu();
@@ -134,10 +145,13 @@ void optionsMenu(){
     prev_selected = 1; // selected will initially be 0, therefore this will trigger an initial render of the menu
     just_entered = false;
 
-    // Setup icon slots
-    for(int i = 0; i < 8; i++){
-      lcd.createChar(i, icon_lookup[i*2]);
-    }
+    // Load initial icons (the selected option will have its icon dynamically updated later)
+    //for(int i = 0; i < 8; i++){
+      //lcd.createChar(i, icon_lookup[i*2]);
+    //}
+
+    lcd.createChar(0, icon_lookup[0]);
+    lcd.createChar(1, icon_lookup[1]);
   }
 
   static const char *option_names[8] = {"Back", "Timer", "Stopwatch", "Alarm", "World Clock", "Colours", "Clock Setup", "Display Off"};
@@ -151,6 +165,9 @@ void optionsMenu(){
     switch(selected){
       case 0:
         enterScreen(CLOCK_FACE, 0);
+        break;
+      case 2:
+        enterScreen(STOPWATCH, 0);
         break;
       case 5:
         enterScreen(COLOUR_MENU, 0);
@@ -170,16 +187,22 @@ void optionsMenu(){
 
   if(selected != prev_selected){
 
-    lcd.createChar(selected, icon_lookup[(selected * 2) + 1]); // Invert icon of selected option
-    lcd.createChar(prev_selected, icon_lookup[prev_selected * 2]); // Undo inversion of previously selected option
+    //lcd.createChar(selected, icon_lookup[(selected * 2) + 1]); // Invert icon of selected option
+    //lcd.createChar(prev_selected, icon_lookup[prev_selected * 2]); // Undo inversion of previously selected option
 
     lcd.clear();
     //lcd.noCursor();
 
-    lcd.setCursor(0, 1);
+    lcd.setCursor(4, 1);
     for(int i = 0; i < 8; i++){ // Render icon slots 0-7
-      lcd.write(i);
-      lcd.moveCursorRight();
+      //lcd.write(i);
+      
+      if(i == selected){
+        lcd.write(1);
+      }else{
+        lcd.write(0);
+      }
+      
     }
 
     int leftmost_char = 16 - (strlen(option_names[selected]));
@@ -358,6 +381,114 @@ void clockSetup(){
     s_menu_stage += 1;
   }
 
+}
+
+void stopwatch(){
+
+  static int prev_selected = 0;
+  static bool update_menu = false;
+
+  if(just_entered){
+    counter = 0;
+    prev_selected = 1;
+    just_entered = false;
+
+    // Load icons
+    for(int i=0; i<6; i++){
+      lcd.createChar(i, sw_icon_lookup[i]);
+    }
+    
+    // Swap to pause icon if we are re-entering the stopwatch screen after it has been running in the background
+    if(stopwatch_running){ // Better way of doing this that isn't just overwriting the work we did in the for loop above?
+      lcd.createChar(2, sw_icon_lookup[6]);
+      lcd.createChar(3, sw_icon_lookup[7]);
+    }
+
+    lcd.createChar(6, icon_lookup[4]); // Check the lookup index later once main menu swapped over to raised icon selection indicator
+  }
+
+  int selected = counter % 3;
+  if(selected < 0){
+    selected = 3 - abs(selected);
+  }
+
+    // Process inputs
+  if(inputs[0] == true){
+    switch(selected){
+      case 0: // Back button
+        enterScreen(OPTIONS_MENU, 0);
+        return;
+
+      case 1: // Start or pause stopwatch
+        if(stopwatch_running){
+          // Add runtime until now to the total
+          stopwatch_running = false;
+          lcd.createChar(2, sw_icon_lookup[2]); // Swap to play icon
+          lcd.createChar(3, sw_icon_lookup[3]); 
+        }else{
+          // Set start time to now
+          stopwatch_running = true;
+          lcd.createChar(2, sw_icon_lookup[6]); // Swap to pause icon
+          lcd.createChar(3, sw_icon_lookup[7]);
+        }
+        break;
+
+      case 2: // Reset stopwatch
+        stopwatch_running = false;
+        stopwatch_total = 0; // Will this need to be a long? Intend to enable stopwatch to support up to 23:59:59 of total runtime
+        lcd.createChar(2, sw_icon_lookup[2]); // Swap to play icon
+        lcd.createChar(3, sw_icon_lookup[3]); 
+        break;
+    }
+
+    update_menu = true;
+  }
+
+  // Render stopwatch time string
+  lcd.setCursor(4, 0);
+  if(stopwatch_running){
+    // total + calculated time since start
+    lcd.print("12:34:56");
+  }else{
+    if(stopwatch_total == 0){
+      lcd.print("00:00:00");
+    }else{
+      // stopwatch_total
+      lcd.print("01:01:01");
+    }
+  }
+
+  // Render stopwatch controls menu
+  if(selected != prev_selected || update_menu){
+    lcd.setCursor(0, 1);
+    for(int i=0; i<3; i++){
+      if(i == selected){
+        lcd.write(i*2 + 1);
+      }else{
+        lcd.write(i*2);
+      }
+    }
+
+    lcd.setCursor(11, 1);
+    switch(selected){
+      case 0:
+        lcd.print("Back ");
+        break;
+      case 1:
+        if(stopwatch_running){
+          lcd.print("Pause");
+        }else{
+          lcd.print("Start");
+        }
+        break;
+      case 2:
+        lcd.print("Reset");
+        break;
+    }
+
+    prev_selected = selected;
+    update_menu = false;
+  }
 }
 
 void clockFace(){

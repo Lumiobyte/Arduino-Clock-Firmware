@@ -1,26 +1,81 @@
 #ifndef ICONS_H
 #define ICONS_H
 
-const uint8_t I_BACK[8] PROGMEM = {
+const uint8_t TEST_ICON[8] PROGMEM = {
+  0b00000,
 	0b00000,
 	0b00100,
-	0b01000,
-	0b11111,
-	0b01000,
+	0b01110,
+	0b00100,
+	0b00000,
+	0b00000,
+	0b00000
+};
+
+const uint8_t TEST_ICON_SEL[8] PROGMEM = {
+	0b00000,
+	0b00100,
+	0b01010,
+	0b10001,
+	0b01010,
 	0b00100,
 	0b00000,
 	0b00000
 };
 
-const uint8_t I_BACK_INV[8] PROGMEM = {
-	0b11111,
-	0b11011,
-	0b10111,
+const uint8_t I_RECT[8] PROGMEM = {
 	0b00000,
-	0b10111,
-	0b11011,
+	0b00000,
+	0b00000,
+	0b00100,
+	0b01000,
+	0b11111,
+	0b01000,
+	0b00100
+};
+
+const uint8_t I_RECT_SEL[8] PROGMEM = {
+	0b11111,
+	0b11111,
+	0b10001,
+	0b10001,
+	0b10001,
+	0b10001,
 	0b11111,
 	0b11111
+};
+
+const uint8_t I_RECT_SEL2[8] PROGMEM = {
+	0b00100,
+	0b01000,
+	0b11111,
+	0b01000,
+	0b00100,
+	0b00000,
+	0b00000,
+	0b00000
+};
+
+const uint8_t I_BACK[8] PROGMEM = {
+	0b00000,
+  0b00000,
+	0b00100,
+	0b01000,
+	0b11111,
+	0b01000,
+	0b00100,
+	0b00000
+};
+
+const uint8_t I_BACK_SEL[8] PROGMEM = {
+  0b00100,
+	0b01000,
+	0b11111,
+	0b01000,
+	0b00100,
+	0b00000,
+  0b00000,
+	0b00000
 };
 
 const uint8_t I_TIMER[8] PROGMEM = {
@@ -34,17 +89,6 @@ const uint8_t I_TIMER[8] PROGMEM = {
 	0b00000
 };
 
-const uint8_t I_TIMER_INV[8] PROGMEM = {
-	0b00000,
-	0b00000,
-	0b10001,
-	0b11011,
-	0b10101,
-	0b01110,
-	0b00000,
-	0b11111
-};
-
 const uint8_t I_STOPWATCH[8] PROGMEM = {
 	0b00000,
 	0b00100,
@@ -54,17 +98,6 @@ const uint8_t I_STOPWATCH[8] PROGMEM = {
 	0b10001,
 	0b01110,
 	0b00000
-};
-
-const uint8_t I_STOPWATCH_INV[8] PROGMEM = {
-	0b11111,
-	0b11011,
-	0b10001,
-	0b01000,
-	0b01000,
-	0b01110,
-	0b10001,
-	0b11111
 };
 
 const uint8_t I_ALARM[8] PROGMEM = { // Maybe make the center pixels hollow instead of filled?
@@ -78,17 +111,6 @@ const uint8_t I_ALARM[8] PROGMEM = { // Maybe make the center pixels hollow inst
 	0b00000
 };
 
-const uint8_t I_ALARM_INV[8] PROGMEM = {
-	0b11111,
-	0b11011,
-	0b10001,
-	0b10001,
-	0b10001,
-	0b00000,
-	0b11111,
-	0b11111
-};
-
 const uint8_t I_WORLDCLOCK[8] PROGMEM = {
 	0b00000,
 	0b00000,
@@ -98,17 +120,6 @@ const uint8_t I_WORLDCLOCK[8] PROGMEM = {
 	0b01110,
 	0b00000,
 	0b00000
-};
-
-const uint8_t I_WORLDCLOCK_INV[8] PROGMEM = {
-	0b11111,
-	0b11111,
-	0b10001,
-	0b10001,
-	0b10001,
-	0b10001,
-	0b11111,
-	0b11111
 };
 
 const uint8_t I_COLOUR[8] PROGMEM = {
@@ -122,17 +133,6 @@ const uint8_t I_COLOUR[8] PROGMEM = {
 	0b00000
 };
 
-const uint8_t I_COLOUR_INV[8] PROGMEM = {
-	0b11011,
-	0b10001,
-	0b00000,
-	0b10101,
-	0b10101,
-	0b10101,
-	0b11011,
-	0b11111
-};
-
 const uint8_t I_CLOCK[8] PROGMEM = {
 	0b00000,
 	0b01110,
@@ -142,17 +142,6 @@ const uint8_t I_CLOCK[8] PROGMEM = {
 	0b01110,
 	0b00000,
 	0b00000
-};
-
-const uint8_t I_CLOCK_INV[8] PROGMEM = {
-	0b11111,
-	0b10001,
-	0b01010,
-	0b01000,
-	0b01110,
-	0b10001,
-	0b11111,
-	0b11111
 };
 
 const uint8_t I_OFF[8] PROGMEM = {
@@ -166,83 +155,6 @@ const uint8_t I_OFF[8] PROGMEM = {
 	0b00000
 };
 
-const uint8_t I_OFF_INV[8] PROGMEM = {
-	0b11111,
-	0b11011,
-	0b01010,
-	0b01010,
-	0b01110,
-	0b10001,
-	0b11111,
-	0b11111
-};
-
-const uint8_t I_PLAY[8] PROGMEM = {
-	0b00000,
-	0b01000,
-	0b01100,
-	0b01110,
-	0b01110,
-	0b01100,
-	0b01000,
-	0b00000
-};
-
-const uint8_t I_PLAY_INV[8] PROGMEM = {
-	0b11111,
-	0b10111,
-	0b10011,
-	0b10001,
-	0b10001,
-	0b10011,
-	0b10111,
-	0b11111
-};
-
-const uint8_t I_PAUSE[8] PROGMEM = {
-	0b00000,
-	0b00000,
-	0b11011,
-	0b11011,
-	0b11011,
-	0b11011,
-	0b00000,
-	0b00000
-};
-
-const uint8_t I_PAUSE_INV[8] PROGMEM = {
-	0b11111,
-	0b11111,
-	0b00100,
-	0b00100,
-	0b00100,
-	0b00100,
-	0b11111,
-	0b11111
-};
-
-const uint8_t I_RESET[8] PROGMEM = {
-	0b00000,
-	0b10001,
-	0b01010,
-	0b00100,
-	0b01010,
-	0b10001,
-	0b00000,
-	0b00000
-};
-
-const uint8_t I_RESET_INV[8] PROGMEM = {
-	0b11111,
-	0b01110,
-	0b10101,
-	0b11011,
-	0b10101,
-	0b01110,
-	0b11111,
-	0b11111
-};
-
 const uint8_t I_CALENDAR[8] PROGMEM = {
 	0b00000,
 	0b01010,
@@ -254,22 +166,82 @@ const uint8_t I_CALENDAR[8] PROGMEM = {
 	0b00000
 };
 
-const uint8_t I_CALENDAR_INV[8] PROGMEM = {
-	0b11111,
-	0b10101,
+const uint8_t* icon_lookup[10] = {
+  TEST_ICON, TEST_ICON_SEL, I_BACK, I_TIMER, I_STOPWATCH, 
+  I_ALARM, I_WORLDCLOCK, I_COLOUR, 
+  I_CLOCK, I_OFF
+};
+
+
+///// Stopwatch screen menu icons /////
+
+const uint8_t I_PLAY[8] PROGMEM = {
 	0b00000,
-	0b00100,
+	0b00000,
+	0b01000,
+	0b01100,
+	0b01110,
+	0b01100,
+	0b01000,
+	0b00000
+};
+
+const uint8_t I_PLAY_SEL[8] PROGMEM = {
+	0b01000,
+	0b01100,
+	0b01110,
+	0b01100,
+	0b01000,
+	0b00000,
+	0b00000,
+	0b00000
+};
+
+const uint8_t I_PAUSE[8] PROGMEM = {
+	0b00000,
+	0b00000,
+	0b00000,
+	0b01010,
+	0b01010,
+	0b01010,
+	0b01010,
+	0b00000
+};
+
+const uint8_t I_PAUSE_SEL[8] PROGMEM = {
+	0b00000,
+	0b01010,
+	0b01010,
+	0b01010,
 	0b01010,
 	0b00000,
+	0b00000,
+	0b00000
+};
+
+const uint8_t I_RESET[8] PROGMEM = {
+	0b00000,
+	0b00000,
+	0b00100,
+	0b01000,
 	0b11111,
+	0b01001,
+	0b00101,
 	0b11111
 };
 
-const uint8_t* icon_lookup[16] = {
-  I_BACK, I_BACK_INV, I_TIMER, I_TIMER_INV, I_STOPWATCH, I_STOPWATCH_INV, 
-  I_ALARM, I_ALARM_INV, I_WORLDCLOCK, I_WORLDCLOCK_INV, I_COLOUR, I_COLOUR_INV, 
-  I_CLOCK, I_CLOCK_INV, I_OFF, I_OFF_INV
-  };
+const uint8_t I_RESET_SEL[8] PROGMEM = {
+	0b00100,
+	0b01000,
+	0b11111,
+	0b01001,
+	0b00101,
+	0b11111,
+	0b00000,
+	0b00000
+};
+
+const uint8_t* sw_icon_lookup[8] = {I_BACK, I_BACK_SEL, I_PLAY, I_PLAY_SEL, I_RESET, I_RESET_SEL, I_PAUSE, I_PAUSE_SEL};
 
 
 #endif // ICONS_H
