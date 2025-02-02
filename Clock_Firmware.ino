@@ -1,15 +1,17 @@
+#include <Wire.h>
 #include <hd44780.h>
-#include <hd44780ioClass/hd44780_pinIO.h>
+#include <hd44780ioClass/hd44780_I2Cexp.h>
 #include "icons.h"
 
 // LCD
-const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 7, d7 = 8;
-hd44780_pinIO lcd(rs, en, d4, d5, d6, d7);
+// const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 7, d7 = 8;
+// hd44780_pinIO lcd(rs, en, d4, d5, d6, d7);
+hd44780_I2Cexp lcd;
 
 // LCD RGB
-const int red_pin = 6;
-const int green_pin = 9;
-const int blue_pin = 10;
+const int red_pin = 9;
+const int green_pin = 10;
+const int blue_pin = 11;
 
 int colour[3] = {255, 255, 255};
 
@@ -65,7 +67,11 @@ void setup() {
 
   pinMode(13, INPUT_PULLUP);
 
-  lcd.begin(16, 2);
+  int status;
+  status = lcd.begin(16, 2);
+  if(status){ // Non-zero result indicates failure to initialise LCD
+    hd44780::fatalError(status); // Blink status code using onboard LED
+  }
   
   // Read the user's colour from eeprom?
   analogWrite(green_pin, 255);
@@ -383,6 +389,10 @@ void clockSetup(){
 
 }
 
+void timeSelector(int counter){
+  
+}
+
 void stopwatch(){
 
   static int prev_selected = 0;
@@ -472,7 +482,7 @@ void stopwatch(){
     lcd.setCursor(11, 1);
     switch(selected){
       case 0:
-        lcd.print("Back ");
+        lcd.print(" Back");
         break;
       case 1:
         if(stopwatch_running){
@@ -623,7 +633,14 @@ void updateColour(float hue, float lightness) {
   colour[1] = green;
   colour[2] = blue;
 
-  Serial.println(red);
+  /*
+  Serial.print("Red = ");
+  Serial.print(red);
+  Serial.print(" Green = ");
+  Serial.print(green);
+  Serial.print(" Blue = ");
+  Serial.println(blue);
+  */
 }
 
 double hue2rgb(double p, double q, double t){
@@ -636,7 +653,7 @@ double hue2rgb(double p, double q, double t){
 }
 
 int day_constrain(int value, int month, int year){
-  if(value < 0) return 0;
+  if(value < 1) return 1;
   
   int month_max = 31;
   switch(month){

@@ -59,12 +59,12 @@ const uint8_t I_RECT_SEL2[8] PROGMEM = {
 const uint8_t I_BACK[8] PROGMEM = {
 	0b00000,
   0b00000,
+  0b00000,
 	0b00100,
 	0b01000,
 	0b11111,
 	0b01000,
 	0b00100,
-	0b00000
 };
 
 const uint8_t I_BACK_SEL[8] PROGMEM = {
@@ -177,13 +177,13 @@ const uint8_t* icon_lookup[10] = {
 
 const uint8_t I_PLAY[8] PROGMEM = {
 	0b00000,
+  0b00000,
 	0b00000,
 	0b01000,
 	0b01100,
 	0b01110,
 	0b01100,
-	0b01000,
-	0b00000
+	0b01000
 };
 
 const uint8_t I_PLAY_SEL[8] PROGMEM = {
@@ -199,13 +199,13 @@ const uint8_t I_PLAY_SEL[8] PROGMEM = {
 
 const uint8_t I_PAUSE[8] PROGMEM = {
 	0b00000,
+  0b00000,
 	0b00000,
 	0b00000,
 	0b01010,
 	0b01010,
 	0b01010,
-	0b01010,
-	0b00000
+	0b01010
 };
 
 const uint8_t I_PAUSE_SEL[8] PROGMEM = {
