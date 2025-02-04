@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <hd44780.h>
 #include <hd44780ioClass/hd44780_I2Cexp.h>
+#include <DS3231.h>
 #include "icons.h"
 
 // LCD
@@ -14,6 +15,17 @@ const int green_pin = 10;
 const int blue_pin = 11;
 
 int colour[3] = {255, 255, 255};
+
+// RTC
+DS3231 rtc;
+int year = 2025;
+int month = 2;
+int day = 2;
+int hour = 22;
+int minute = 20;
+int second = 0;
+bool dst = false;
+
 
 // Encoder
 const int enc_a = 3;
@@ -73,8 +85,11 @@ void setup() {
     hd44780::fatalError(status); // Blink status code using onboard LED
   }
   
-  // Read the user's colour from eeprom?
+  // Setup user data e.g. their selected colour, modes, RTC time, etc.
   analogWrite(green_pin, 255);
+
+  rtc.setClockMode(false);
+  getClockData();
 
   Serial.begin(9600);
 
@@ -274,25 +289,10 @@ void clockSetup(){
 
   static int s_menu_stage;
 
-  static int hours;
-  static int minutes;
-  static int seconds;
-  static int day;
-  static int month;
-  static int year;
-
   if(just_entered){
     s_menu_stage = 0;
 
-    // Assign them the actual values
-    hours = 9; // Stage 0
-    minutes = 41; // 1
-    seconds = 30; // 2
-    day = 7; // 5
-    month = 12; // 4
-    year = 2024; // 3
-
-    counter = hours;
+    counter = hour;
 
     lcd.setCursor(1, 0);
     lcd.print("Set");
@@ -305,15 +305,15 @@ void clockSetup(){
   switch(s_menu_stage){
     case 0:
       counter = constrain(counter, 0, 23);
-      hours = counter;
+      hour = counter;
       break;
     case 1:
       counter = constrain(counter, 0, 59);
-      minutes = counter;
+      minute = counter;
       break;
     case 2:
       counter = constrain(counter, 0, 59);
-      seconds = counter;
+      second = counter;
       break;
     case 3:
       counter = constrain(counter, 2024, 2100);
@@ -334,7 +334,7 @@ void clockSetup(){
   int indicator_loc;
   if(s_menu_stage < 3){ // Change snprintf to string functions (strcpy, strcat) if running out of code space
     char time_string[9];
-    snprintf(time_string, sizeof(time_string), "%02d:%02d:%02d", hours, minutes, seconds);
+    snprintf(time_string, sizeof(time_string), "%02d:%02d:%02d", hour, minute, second);
     lcd.setCursor(8, 0);
     lcd.print(time_string);
 
@@ -361,10 +361,10 @@ void clockSetup(){
   if(inputs[0] == true){
     switch(s_menu_stage){
       case 0:
-        counter = minutes;
+        counter = minute;
         break;
       case 1:
-        counter = seconds;
+        counter = second;
         break;
       case 2:
         lcd.setCursor(0, 1);
@@ -379,6 +379,7 @@ void clockSetup(){
         break;
       case 5:
         // Create DST setting here?
+        setClockData(); // Save changes to RTC
         enterScreen(OPTIONS_MENU, 0);
         return;
         
@@ -510,12 +511,14 @@ void clockFace(){
     enterScreen(OPTIONS_MENU, 0);
     return;
   }
+
+  getClockData();
   
   char time_str[6];
   if(show_colon){
-    strcpy(time_str, "09:41"); // Look into snprintf to assign the hour and minute values as required
+    snprintf(time_str, 6, "%02d:%02d", hour, minute); // Look into snprintf to assign the hour and minute values as required
   }else{
-    strcpy(time_str, "09 41");
+    snprintf(time_str, 6, "%02d %02d", hour, minute);
   }
 
   if(millis() - colon_last_millis > 1000){
@@ -527,7 +530,7 @@ void clockFace(){
   lcd.print(time_str);
 
   char date_str[6];
-  strcpy(date_str, "06/12");
+  snprintf(date_str, 6, "%02d/%02d", day, month);
 
   lcd.setCursor(10, 1);
   lcd.print(date_str);
@@ -602,6 +605,30 @@ void readEncoder() {
     encval = 0;
   }
 
+}
+
+void getClockData(){
+  second = rtc.getSecond();
+  minute = rtc.getMinute();
+
+  bool twelveHour, pmHour;
+  hour = rtc.getHour(twelveHour, pmHour);
+
+  day = rtc.getDate();
+
+  bool centuryBit;
+  month = rtc.getMonth(centuryBit);
+
+  year = rtc.getYear();
+}
+
+void setClockData(){
+  rtc.setSecond(second);
+  rtc.setMinute(minute);
+  rtc.setHour(hour);
+  rtc.setDate(day);
+  rtc.setMonth(month);
+  rtc.setYear(year);
 }
 
 
