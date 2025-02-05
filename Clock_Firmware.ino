@@ -304,85 +304,39 @@ void clockSetup(){
 
   switch(s_menu_stage){
     case 0:
-      counter = constrain(counter, 0, 23);
-      hour = counter;
+      timeSelector(&second, &minute, &hour);
       break;
     case 1:
-      counter = constrain(counter, 0, 59);
-      minute = counter;
+      dateSelector(&day, &month, &year);
+      Serial.print("Updated year: ");
+      Serial.println(year);
       break;
     case 2:
-      counter = constrain(counter, 0, 59);
-      second = counter;
+      // DST setting menu - turn the dial to toggle between on or off (counter % 2)? This case can't be reached for now
       break;
-    case 3:
-      counter = constrain(counter, 2024, 2100);
-      year = counter;
-      break;
-    case 4:
-      counter = constrain(counter, 1, 12);
-      month = counter;
-      break;
-    case 5:
-      counter = day_constrain(counter, month, year); // Different range depending on which month is selected.
-      day = counter;
-      break;
-  }
-
-  // Rendering
-
-  int indicator_loc;
-  if(s_menu_stage < 3){ // Change snprintf to string functions (strcpy, strcat) if running out of code space
-    char time_string[9];
-    snprintf(time_string, sizeof(time_string), "%02d:%02d:%02d", hour, minute, second);
-    lcd.setCursor(8, 0);
-    lcd.print(time_string);
-
-    indicator_loc = 8 + ((s_menu_stage % 3) * 2) + (s_menu_stage % 3);
-  }else if(s_menu_stage < 6){
-    char date_string[11];
-    snprintf(date_string, sizeof(date_string), "%02d/%02d/%d", day, month, year);
-    lcd.setCursor(6, 0);
-    lcd.print(date_string);
-
-    indicator_loc = 12 - ((s_menu_stage % 3) * 2) - (s_menu_stage % 3);
-  }
-
-  lcd.setCursor(6, 1);
-  lcd.print("          "); // Clear existing ^^
-  lcd.setCursor(indicator_loc, 1);
-  if(s_menu_stage == 3){
-    lcd.print("^^^^");
-  }else if(s_menu_stage < 6){
-    lcd.print("^^");
   }
 
   // Process inputs
   if(inputs[0] == true){
     switch(s_menu_stage){
       case 0:
-        counter = minute;
-        break;
-      case 1:
-        counter = second;
-        break;
-      case 2:
         lcd.setCursor(0, 1);
         lcd.print("Date");
         counter = year;
+        Serial.print("Setting counter to year: ");
+        Serial.println(year);
         break;
-      case 3:
-        counter = month;
-        break;
-      case 4:
-        counter = day;
-        break;
-      case 5:
-        // Create DST setting here?
+      case 1:
+        Serial.print("Saving year: ");
+        Serial.println(year);
         setClockData(); // Save changes to RTC
         enterScreen(OPTIONS_MENU, 0);
         return;
-        
+      case 2:
+        // DST choice completed - achieve it by setting the RTC time forward or back by 1h
+        enterScreen(OPTIONS_MENU, 0);
+        return;
+
     }
 
     s_menu_stage += 1;
@@ -390,8 +344,113 @@ void clockSetup(){
 
 }
 
-void timeSelector(int counter){
-  
+// Both this and date selector take pointers and update the values directly, and hence don't need to return anything
+void timeSelector(int* secondP, int* minuteP, int* hourP){
+
+  static int ts_menu_stage;
+
+  switch(ts_menu_stage){
+    case 0:
+      counter = constrain(counter, 0, 23);
+      *hourP = counter;
+      break;
+    case 1:
+      counter = constrain(counter, 0, 59);
+      *minuteP = counter;
+      break;
+    case 2:
+      counter = constrain(counter, 0, 59);
+      *secondP = counter;
+      break;
+  }
+
+  // Rendering 
+  char time_string[9];
+  snprintf(time_string, sizeof(time_string), "%02d:%02d:%02d", *hourP, *minuteP, *secondP); // Change snprintf to string functions (strcpy, strcat) if running out of code space
+  lcd.setCursor(8, 0);
+  lcd.print(time_string);
+
+  int indicator_loc = 8 + ((ts_menu_stage % 3) * 2) + (ts_menu_stage % 3);
+  lcd.setCursor(6, 1);
+  lcd.print("          "); // Clear existing ^^
+  lcd.setCursor(indicator_loc, 1);
+  lcd.print("^^");
+
+  // Process inputs
+  if(inputs[0] == true){
+    switch(ts_menu_stage){
+      case 0:
+        inputs[0] = false;
+        counter = *minuteP;
+        break;
+      case 1:
+        inputs[0] = false;
+        counter = *secondP;
+        break;
+      case 2:
+        ts_menu_stage = 0;
+        return;
+    }
+
+    ts_menu_stage += 1;
+  }
+
+}
+
+void dateSelector(int* dayP, int* monthP, int* yearP){
+
+  static int ds_menu_stage;
+
+  switch(ds_menu_stage){
+    case 0:
+      counter = constrain(counter, 2024, 2100);
+      *yearP = counter;
+      break;
+    case 1:
+      counter = constrain(counter, 1, 12);
+      *monthP = counter;
+      break;
+    case 2:
+      counter = day_constrain(counter, *monthP, *yearP); // Different range depending on which month is selected.
+      *dayP = counter;
+      break;
+  }  
+
+  // Rendering 
+  char date_string[11];
+  snprintf(date_string, sizeof(date_string), "%02d/%02d/%d", *dayP, *monthP, *yearP);
+  lcd.setCursor(6, 0);
+  lcd.print(date_string);
+
+  int indicator_loc = 12 - ((ds_menu_stage % 3) * 2) - (ds_menu_stage % 3);
+  lcd.setCursor(6, 1);
+  lcd.print("          "); // Clear existing ^^
+  lcd.setCursor(indicator_loc, 1);
+  if(ds_menu_stage == 0){
+    lcd.print("^^^^");
+  }else if(ds_menu_stage < 3){
+    lcd.print("^^");
+  }
+
+  // Process inputs
+  if(inputs[0] == true){
+    switch(ds_menu_stage){
+      case 0:
+        inputs[0] = false;
+        counter = *monthP;
+        break;
+      case 1:
+        inputs[0] = false;
+        counter = *dayP;
+        break;
+      case 2:
+        ds_menu_stage = 0;
+        return;
+    }
+
+    ds_menu_stage += 1;
+  }
+
 }
 
 void stopwatch(){
@@ -513,6 +572,8 @@ void clockFace(){
   }
 
   getClockData();
+  Serial.print("Year: ");
+  Serial.println(year);
   
   char time_str[6];
   if(show_colon){
@@ -619,7 +680,7 @@ void getClockData(){
   bool centuryBit;
   month = rtc.getMonth(centuryBit);
 
-  year = rtc.getYear();
+  year = rtc.getYear() + 2000;
 }
 
 void setClockData(){
@@ -628,7 +689,7 @@ void setClockData(){
   rtc.setHour(hour);
   rtc.setDate(day);
   rtc.setMonth(month);
-  rtc.setYear(year);
+  rtc.setYear(year - 2000); // RTC stores 00 ... 99, so we must store year as an offset from 2000 e.g. 2025-2000 -> 25
 }
 
 
